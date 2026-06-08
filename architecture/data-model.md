@@ -170,10 +170,13 @@ model Enrolment {
   @@unique([userId, roadmapId])
 }
 
+// TopicProgress tracks status at both topic and sub-topic level.
+// Sub-topics are stored as Topic rows (parentId set), so this model
+// covers both without any schema change.
 model TopicProgress {
   id        String         @id @default(uuid())
   userId    String
-  topicId   String
+  topicId   String         // can be a top-level topic or a sub-topic
   status    ProgressStatus @default(NOT_STARTED)
   updatedAt DateTime       @updatedAt
 

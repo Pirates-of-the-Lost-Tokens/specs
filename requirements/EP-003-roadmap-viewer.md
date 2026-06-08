@@ -17,9 +17,9 @@ Users can open any enrolled roadmap and navigate it as an interactive node-based
 | FR-VIEW-004 | Users can zoom and pan the diagram. |
 | FR-VIEW-005 | A minimap in the corner shows the user's current position within the full diagram. |
 | FR-VIEW-006 | Clicking a topic node opens a detail panel (sidebar or drawer) showing: title, description, and curated resources (links, articles, videos). |
-| FR-VIEW-007 | Each topic has a status: `Not started` (default), `In progress`, `Done`, `Skipped`. |
-| FR-VIEW-008 | Users can change a topic's status from the detail panel. |
-| FR-VIEW-009 | Topic nodes are colour-coded by status so progress is visible at a glance. |
+| FR-VIEW-007 | Each topic and sub-topic has an independent status: `Not started` (default), `In progress`, `Done`, `Skipped`. |
+| FR-VIEW-008 | Users can change the status of a topic or sub-topic from the detail panel. |
+| FR-VIEW-009 | Topic and sub-topic nodes are colour-coded by status so progress is visible at a glance. |
 | FR-VIEW-010 | A progress bar at the top of the viewer shows overall completion percentage for the roadmap. |
 | FR-VIEW-011 | Breadcrumb navigation lets users return to the dashboard or catalog. |
 | FR-VIEW-012 | Topic resources are seeded from roadmap.sh content. Admins can add, edit, or remove resources on any topic after seeding. |
