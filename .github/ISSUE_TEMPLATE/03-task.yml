@@ -1,0 +1,28 @@
+name: Task
+description: A specific implementation or operational task
+labels: ["task"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to be done?
+    validations:
+      required: true
+  - type: textarea
+    id: checklist
+    attributes:
+      label: Checklist
+      value: |
+        - [ ] 
+        - [ ] 
+  - type: input
+    id: parent
+    attributes:
+      label: Parent Issue
+      description: Link to parent feature or epic (e.g. #2)
+  - type: input
+    id: repo
+    attributes:
+      label: Implementation Repo
+      description: Which repo will contain the implementation PR?

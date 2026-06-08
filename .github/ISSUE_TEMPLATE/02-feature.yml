@@ -1,0 +1,32 @@
+name: Feature / User Story
+description: A specific feature or user-facing requirement
+labels: ["feature"]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: User Story
+      description: "As a [role], I want [capability], so that [benefit]"
+      placeholder: "As a learner, I want to..."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Conditions that must be met for this to be considered done
+      value: |
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
+  - type: textarea
+    id: technical
+    attributes:
+      label: Technical Notes
+      description: Implementation context, constraints, or AI-specific considerations
+  - type: input
+    id: epic
+    attributes:
+      label: Parent Epic
+      description: Link to the parent epic (e.g. #1)

@@ -1,0 +1,36 @@
+name: Epic
+description: A large initiative spanning multiple features or repos
+labels: ["epic"]
+body:
+  - type: input
+    id: goal
+    attributes:
+      label: Goal
+      description: What outcome does this epic deliver?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What is in scope? What is explicitly out of scope?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: How do we know this epic is complete?
+    validations:
+      required: true
+  - type: textarea
+    id: breakdown
+    attributes:
+      label: Feature Breakdown
+      description: List the features/stories that make up this epic (link issues once created)
+  - type: textarea
+    id: repos
+    attributes:
+      label: Repos Involved
+      description: Which repos will have implementation work for this epic?
+      placeholder: "- learnmap/specs\n- learnmap/skills\n- learnmap/backend (TBD)"
