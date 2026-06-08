@@ -25,6 +25,9 @@ Any authenticated user can create their own roadmap using a visual canvas builde
 | FR-BUILD-012 | Users can delete their own roadmaps. Deletion requires confirmation and permanently removes all enrolments and progress for that roadmap. |
 | FR-BUILD-013 | Users can duplicate any roadmap (including seeded ones) as a starting point for a new one. The duplicate is owned by the duplicating user and starts as a draft. |
 | FR-BUILD-014 | Seeded roadmaps cannot be structurally edited by regular users. Admin resource editing (FR-VIEW-012) is separate from the builder. |
+| FR-BUILD-015 | When creating a new roadmap, users can choose between "Visual builder" and "Create from text". |
+| FR-BUILD-016 | The text format uses Markdown headings: `#` roadmap title, `##` topic, `###` section (optional — groups sub-topics), `####` sub-topic. Plain text after a heading is the description. Resources follow the format `- [type] Title \| URL` (types: `article`, `video`, `course`). Sub-topics can sit directly under a topic without a section. |
+| FR-BUILD-017 | After parsing, the roadmap opens in the visual builder as a draft for further editing. Parse errors are highlighted inline with a description of what is wrong. |
 
 ## Non-Functional Requirements
 
