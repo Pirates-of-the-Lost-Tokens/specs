@@ -1,0 +1,265 @@
+name: Issue to PR
+
+# Triggers:
+#   1. Manual — workflow_dispatch with an issue number
+#   2. Issue comment — post "/run-issue-to-pr" on any specs issue (owner/member/collaborator only)
+#      This is the hook point for future board automation (e.g. moving a card to "In progress")
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to implement'
+        required: true
+        type: number
+
+  issue_comment:
+    types: [created]
+
+# Prevent concurrent runs for the same issue
+concurrency:
+  group: issue-to-pr-${{ github.event.inputs.issue_number || github.event.issue.number }}
+  cancel-in-progress: false
+
+# ─────────────────────────────────────────────
+# JOB 1 — PLAN
+# Claude reads the issue + specs and posts an implementation plan as an issue comment.
+# ─────────────────────────────────────────────
+jobs:
+  plan:
+    name: Plan
+    # Guard: only run on workflow_dispatch OR a /run-issue-to-pr comment from a trusted author
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.comment.body == '/run-issue-to-pr' &&
+        contains(fromJson('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    outputs:
+      issue_number: ${{ steps.resolve.outputs.issue_number }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve issue number
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "issue_number=${{ inputs.issue_number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "issue_number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Plan — read specs and post plan as issue comment
+        uses: anthropic/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          allowed_tools: "Bash,Read,Glob"
+          prompt: |
+            You are planning the implementation of an issue in the LearnMap project.
+
+            Issue: #${{ steps.resolve.outputs.issue_number }} in learnmap/specs
+
+            Steps:
+
+            1. Read the issue in full:
+               gh issue view ${{ steps.resolve.outputs.issue_number }} \
+                 --repo learnmap/specs \
+                 --json title,body,labels,comments
+
+            2. Find any EP-XXX reference in the issue body. Read the matching requirements file:
+               requirements/EP-XXX-<name>.md
+
+            3. Read the architecture docs:
+               architecture/system-overview.md
+               architecture/data-model.md
+               architecture/api-design.md
+               architecture/frontend.md
+
+            4. Determine which repos are impacted:
+               - learnmap/backend  (data model, API, server-side logic)
+               - learnmap/frontend (UI, pages, components)
+               If a repo does not exist yet, note that creating it is part of the plan.
+
+            5. Produce a plan with these sections:
+               - Impacted Repos (and why)
+               - Implementation Plan per repo:
+                 - Branch name: issue-<number>/<short-description>
+                 - Files to create (specific paths)
+                 - Files to modify (specific paths + what and why)
+                 - Data model changes (Prisma, backend only)
+                 - API changes (backend only)
+                 - Frontend changes (pages/components/hooks, frontend only)
+               - Test Strategy per repo
+               - Risks and Open Questions
+
+            6. Post the plan as a comment on issue #${{ steps.resolve.outputs.issue_number }}:
+
+               gh issue comment ${{ steps.resolve.outputs.issue_number }} \
+                 --repo learnmap/specs \
+                 --body "## Implementation Plan
+
+               > Generated automatically. Review below then approve via the GitHub Actions environment gate, or comment \`/reject-plan <reason>\` to cancel.
+
+               ### Impacted Repos
+               [repos and reasons]
+
+               ### Plan
+               [per-repo details]
+
+               ### Test Strategy
+               [per-repo test approach]
+
+               ### Risks / Open Questions
+               [any blockers or decisions needed]"
+
+  # ─────────────────────────────────────────────
+  # JOB 2 — SIGNOFF (manual approval gate)
+  # A team member reviews the plan comment on the issue then clicks Approve here.
+  # Set up the 'issue-signoff' environment in: Settings → Environments → New environment
+  # Add required reviewers so the workflow pauses until approved.
+  # ─────────────────────────────────────────────
+  signoff:
+    name: Signoff
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: issue-signoff
+    steps:
+      - name: Plan approved
+        run: |
+          echo "Plan for issue #${{ needs.plan.outputs.issue_number }} approved."
+          echo "Proceeding to implementation."
+
+  # ─────────────────────────────────────────────
+  # JOB 3 — IMPLEMENT
+  # Claude implements the plan, writes tests, self-reviews, fixes blockers, and opens draft PRs.
+  #
+  # Secrets required:
+  #   ANTHROPIC_API_KEY  — Anthropic API key
+  #   LEARNMAP_PAT       — GitHub PAT with repo scope across all learnmap repos
+  #                        (GITHUB_TOKEN only covers the current repo)
+  # ─────────────────────────────────────────────
+  implement:
+    name: Implement
+    needs: [plan, signoff]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    env:
+      ISSUE_NUMBER: ${{ needs.plan.outputs.issue_number }}
+      GH_TOKEN: ${{ secrets.LEARNMAP_PAT }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.LEARNMAP_PAT }}
+
+      - name: Configure git
+        run: |
+          git config --global user.name "LearnMap Bot"
+          git config --global user.email "bot@users.noreply.github.com"
+
+      - name: Implement — code, test, review, open PRs
+        uses: anthropic/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.LEARNMAP_PAT }}
+          allowed_tools: "Bash,Read,Write,Edit,Glob"
+          prompt: |
+            Implement issue #${{ env.ISSUE_NUMBER }} in the learnmap organisation.
+
+            ## 1. Read the issue and approved plan
+
+            gh issue view ${{ env.ISSUE_NUMBER }} \
+              --repo learnmap/specs \
+              --json title,body,labels,comments
+
+            The plan is in the most recent comment. Read it carefully.
+            Also read the linked requirements doc and architecture docs from learnmap/specs.
+
+            ## 2. For each impacted repo
+
+            ### 2a. Create repo if it doesn't exist
+
+            gh repo create learnmap/<repo> \
+              --private \
+              --add-readme \
+              --description "<description>"
+
+            ### 2b. Clone the repo
+
+            git clone https://x-access-token:${{ secrets.LEARNMAP_PAT }}@github.com/learnmap/<repo>.git
+            cd <repo>
+
+            ### 2c. Create branch
+
+            git checkout -b issue-${{ env.ISSUE_NUMBER }}/<short-description>
+
+            ### 2d. Implement
+
+            Before writing any file, read the surrounding files in that area.
+            Follow existing conventions — naming, imports, structure.
+            Implement every item from the plan for this repo.
+            Do not add new dependencies without noting them.
+
+            Commit in logical increments:
+              git commit -m "feat(#${{ env.ISSUE_NUMBER }}): <description>"
+
+            ### 2e. Write tests
+
+            Write tests for every new behaviour following the repo's test conventions.
+            Every new API endpoint must have an integration test.
+
+            ### 2f. Self-review
+
+            Check each acceptance criterion from the issue:
+            - Every AC has an implementation
+            - Every new behaviour has a test
+            - No missing auth checks or unvalidated inputs
+            - Error and empty states handled
+
+            Label findings [BLOCKER] or [SUGGESTION].
+            Fix all blockers before continuing.
+
+            ### 2g. Push and open draft PR
+
+            git push -u origin issue-${{ env.ISSUE_NUMBER }}/<short-description>
+
+            gh pr create \
+              --repo learnmap/<repo> \
+              --title "feat(#${{ env.ISSUE_NUMBER }}): <issue title>" \
+              --base main \
+              --draft \
+              --body "## Summary
+            <what was built and why>
+
+            ## Changes
+            - <path>: <what changed>
+
+            ## Test plan
+            - [ ] <specific test step>
+
+            ## References
+            - Closes learnmap/specs#${{ env.ISSUE_NUMBER }}
+            - Requirements: <link to EP-XXX doc>"
+
+            ## 3. Move project card to In review
+
+            Use the GitHub Projects v2 GraphQL API to update the status field
+            of the project item for issue #${{ env.ISSUE_NUMBER }} to "In review"
+            on LearnMap project #1 (org: learnmap).
+
+            Query to find the item ID:
+              gh api graphql -f query='{ organization(login:"learnmap") { projectV2(number:1) { id fields(first:20){nodes{...on ProjectV2SingleSelectField{id name options{id name}}}} items(first:100){nodes{id content{...on Issue{number}}}} } } }'
+
+            Then mutation to update status:
+              gh api graphql -f query='mutation { updateProjectV2ItemFieldValue(input:{projectId:"<pid>" itemId:"<iid>" fieldId:"<fid>" value:{singleSelectOptionId:"<in-review-oid>"}}) { projectV2Item { id } } }'
