@@ -1,0 +1,8 @@
+
+# monorepo scaffold
+learnmap/node_modules/
+learnmap/.turbo/
+learnmap/apps/*/dist/
+learnmap/packages/*/dist/
+learnmap/apps/api/public/assets/
+learnmap/apps/api/public/index.html

@@ -1,0 +1,28 @@
+{
+  "name": "@learnmap/web",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "echo \"lint: skipped\"",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"no tests yet\"",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@learnmap/shared": "workspace:*",
+    "axios": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "^3.1.4"
+  }
+}
