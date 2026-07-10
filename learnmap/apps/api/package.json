@@ -1,0 +1,34 @@
+{
+  "name": "@learnmap/api",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "lint": "echo \"lint: skipped\"",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"no tests yet\"",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@learnmap/shared": "workspace:*",
+    "@nestjs/common": "^11.1.3",
+    "@nestjs/core": "^11.1.3",
+    "@nestjs/platform-express": "^11.1.3",
+    "@nestjs/serve-static": "^5.0.3",
+    "@prisma/client": "^6.9.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.3",
+    "@nestjs/schematics": "^11.0.3",
+    "@nestjs/testing": "^11.1.3",
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.15.21",
+    "prisma": "^6.9.0",
+    "typescript": "catalog:",
+    "vitest": "^3.1.4"
+  }
+}

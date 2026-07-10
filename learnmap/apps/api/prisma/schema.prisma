@@ -1,0 +1,13 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Full schema will be added in EP-002+. Minimal model for migrations.
+model ScaffoldMeta {
+  id Int @id @default(1)
+}
